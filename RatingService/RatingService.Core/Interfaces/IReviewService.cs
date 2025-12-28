@@ -6,7 +6,7 @@ namespace RatingService.Core.Interfaces;
 public interface IReviewService
 {
     Task<ProductReview> CreateProductReview(CreateReviewDto reviewDto);
-    Task<bool> UpdateProductReview(Guid productId, UpdateReviewDto reviewDto);
+    Task<bool> UpdateProductReview(UpdateReviewDto reviewDto);
     Task<bool> DeleteProductReview(Guid reviewId);
 
     Task<IEnumerable<ProductReview>> GetReviewsByProductId(Guid productId, int pageNumber, int pageSize);
