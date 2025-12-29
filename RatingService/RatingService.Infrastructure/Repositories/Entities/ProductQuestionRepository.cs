@@ -8,6 +8,7 @@ namespace RatingService.Infrastructure.Repositories.Entities;
 
 public class ProductQuestionRepository(RatingDbContext context) : Repository<ProductQuestion>(context), IProductQuestionRepository
 {
+
     public async Task<IEnumerable<ProductQuestion>> GetAllProductQuestionsByIdAsync(Guid productId, int page, int pageSize)
     {
         var skip = (page - 1) * pageSize;
@@ -19,6 +20,8 @@ public class ProductQuestionRepository(RatingDbContext context) : Repository<Pro
             .AsNoTracking()
             .ToListAsync();
     }
+    
+    
 
     public async Task<IEnumerable<ProductQuestion>> GetQuestionsAndAnswersByProductIdAsync(Guid productId, int page, int pageSize)
     {
@@ -31,5 +34,12 @@ public class ProductQuestionRepository(RatingDbContext context) : Repository<Pro
             .Take(pageSize)
             .AsNoTracking()
             .ToListAsync();
+    }
+
+    public async Task<ProductQuestion?> GetQuestionByIdAsync(Guid questionId)
+    {
+        return await Entities
+            .AsNoTracking()
+            .SingleOrDefaultAsync(question => question.Id == questionId);
     }
 }

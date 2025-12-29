@@ -8,4 +8,7 @@ public interface IProductQuestionRepository : IRepository<ProductQuestion>
 {
     public Task<IEnumerable<ProductQuestion>> GetAllProductQuestionsByIdAsync(Guid productId, int page, int pageSize);
     public Task<IEnumerable<ProductQuestion>> GetQuestionsAndAnswersByProductIdAsync(Guid productId, int page, int pageSize);
+    
+    public Task<ProductQuestion?> GetQuestionByIdAsync(Guid questionId);
+    
 }
