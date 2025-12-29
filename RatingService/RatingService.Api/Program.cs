@@ -146,14 +146,19 @@ builder.Services.AddApiVersioning(options => { options.ReportApiVersions = true;
         options.SubstituteApiVersionInUrl = true;
     });
 
-builder.Services.AddAutoMapper(cfg => { }, typeof(RatingService.Core.Profiles.ReviewProfile));
+builder.Services.AddAutoMapper(cfg => { }, 
+    typeof(RatingService.Core.Profiles.ReviewProfile),
+    typeof(RatingService.Core.Profiles.QuestionsAndAnswersProfile));
+
 
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IQuestionsAndAnswersService, QuestionsAndAnswersService>();
 builder.Services.AddScoped<IReviewImageService, ReviewImageService>();
 builder.Services.AddScoped<IProductReviewRepository, ProductReviewRepository>();
 builder.Services.AddScoped<IProductQuestionRepository, ProductQuestionRepository>();
+builder.Services.AddScoped<IProductAnswerRepository, ProductAnswerRepository>();
 
 
 
