@@ -3,6 +3,6 @@
 public record UpdateQuestionDto(
     Guid QuestionId,
     Guid UserId,
-    string Text,
+    string? Text,
     bool? IsAnonymous
     );

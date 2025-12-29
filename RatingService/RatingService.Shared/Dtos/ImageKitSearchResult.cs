@@ -2,6 +2,7 @@
 
 public class ImageKitSearchResult
 {
-    public string fileId { get; set;  }
-    public string name { get; set; }
+    public string fileId { get; set; } = null!;
+    public string name { get; set; } = null!;
+    public string filePath { get; set; } = null!;
 }
