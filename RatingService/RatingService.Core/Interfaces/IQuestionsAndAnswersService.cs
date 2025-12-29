@@ -14,5 +14,5 @@ public interface IQuestionsAndAnswersService
     Task<bool> UpdateQuestion(UpdateQuestionDto questionDto);
     Task<bool> UpdateAnswer(UpdateAnswerDto answerDto);
 
-    Task<IEnumerable<ProductQuestion>> GetProductQuestionsAndAnswers(Guid productId, int pageSize, int pageNumber);
+    Task<IEnumerable<ProductQuestion>> GetProductQuestionsAndAnswers(Guid productId, int page, int pageSize);
 }
