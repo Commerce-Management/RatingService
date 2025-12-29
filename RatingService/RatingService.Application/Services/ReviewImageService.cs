@@ -31,16 +31,21 @@ public class ReviewImageService(IConfiguration configuration) : IReviewImageServ
         };
         
         var result = await _imagekitClient.UploadAsync(ob);
-        return result.url;
+        return $"{result.url}?ik_file_id={result.fileId}";  // i keep fileId for delete image from ImageKit service
     }
     
 
+    
+    // not work delete..
     public async Task<bool> DeleteImageAsync(string imageUrl)
     {
         var uri = new Uri(imageUrl);
 
-        // имя файла без папки
-        var fileName = Path.GetFileName(uri.AbsolutePath);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var fileId = query["ik_file_id"];
+
+        if (string.IsNullOrWhiteSpace(fileId))
+            throw new InvalidOperationException("fileId not found in image URL");
 
         var auth = Convert.ToBase64String(
             Encoding.UTF8.GetBytes($"{_privateKey}:"));
@@ -49,28 +54,12 @@ public class ReviewImageService(IConfiguration configuration) : IReviewImageServ
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Basic", auth);
 
-        var searchResponse = await client.PostAsJsonAsync(
-            "https://api.imagekit.io/v1/files/search",
-            new
-            {
-                searchQuery = $"name = \"{fileName}\""
-            });
+        var response = await client.DeleteAsync(
+            $"https://api.imagekit.io/v1/files/{fileId}");
 
-        if (!searchResponse.IsSuccessStatusCode)
-            return false;
-
-        var files = await searchResponse.Content
-            .ReadFromJsonAsync<List<ImageKitSearchResult>>();
-
-        var file = files?.SingleOrDefault();
-        if (file == null)
-            return false;
-
-        var deleteResponse = await client.DeleteAsync(
-            $"https://api.imagekit.io/v1/files/{file.fileId}");
-
-        return deleteResponse.IsSuccessStatusCode;
+        return response.IsSuccessStatusCode;
     }
+
 
 
 
