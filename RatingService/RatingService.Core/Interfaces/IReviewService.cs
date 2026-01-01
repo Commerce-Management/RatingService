@@ -14,4 +14,7 @@ public interface IReviewService
     Task<IEnumerable<ProductReview>> GetReviewsByDate(DateTime date, int pageNumber, int pageSize);
     Task<IEnumerable<ProductReview>> GetAllReviews(int pageNumber, int pageSize);
     Task<ProductReview> GetReviewByid(Guid reviewId);
+
+    Task<ProductReviewAggregate> GetReviewAggregateByProductId(Guid productId);
+
 }
