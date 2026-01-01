@@ -10,16 +10,25 @@ namespace RatingService.Application.Services;
 public class ReviewService(
     IUnitOfWork unitOfWork,
     IProductReviewRepository productReviewRepository,
+    IReviewAggregateRepository reviewAggregateRepository,
     IReviewImageService imageService,
     IMapper mapper
     ) : IReviewService
 {
+
     public async Task<ProductReview> CreateProductReview(CreateReviewDto reviewDto)
     {
         try
         {
             var review = mapper.Map<ProductReview>(reviewDto);
+            var aggregateReview =
+                await reviewAggregateRepository.GetReviewAggregateByProductIdAsync(reviewDto.ProductId);
 
+            if (aggregateReview == null)  
+                throw new KeyNotFoundException($"Aggregate review with productId - {reviewDto.ProductId} not found!");
+
+            aggregateReview.ReviewCount += 1;
+                
             if (reviewDto.Images is { Length: > 0})
             {
                 var imageUrls = new List<string>();
@@ -36,6 +45,8 @@ public class ReviewService(
             await unitOfWork.BeginTransactionAsync();
 
             var insertedReview = await productReviewRepository.InsertAsync(review);
+            
+            
             
             await unitOfWork.SaveChangesAsync();
             await unitOfWork.CommitTransactionAsync();
@@ -161,5 +172,17 @@ public class ReviewService(
             throw new KeyNotFoundException($"Review {reviewId} not found!");
 
         return review;
+    }
+    
+    
+    
+
+    public async Task<ProductReviewAggregate> GetReviewAggregateByProductId(Guid productId)
+    {
+        var aggregateReview = await reviewAggregateRepository.GetReviewAggregateByProductIdAsync(productId);
+        if (aggregateReview == null)
+            throw new KeyNotFoundException($"Aggregate review with productId - {productId} not found!");
+
+        return aggregateReview;
     }
 }
