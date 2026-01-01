@@ -8,6 +8,7 @@ namespace RatingService.Infrastructure.Repositories.Entities;
 
 public class ProductReviewRepository(RatingDbContext context) : Repository<ProductReview>(context), IProductReviewRepository
 {
+
     public async Task<IEnumerable<ProductReview>> GetAllProductReviewsByIdAsync(Guid productId, int page, int pageSize)
     {
         var skip = (page - 1) * pageSize;
@@ -65,4 +66,5 @@ public class ProductReviewRepository(RatingDbContext context) : Repository<Produ
             .AsNoTracking()
             .ToListAsync();
     }
+
 }
