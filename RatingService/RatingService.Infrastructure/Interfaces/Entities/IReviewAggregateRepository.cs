@@ -3,8 +3,9 @@ using RatingService.Infrastructure.Interfaces.Base;
 
 namespace RatingService.Infrastructure.Interfaces.Entities;
 
-public interface IReviewAggregateRepository  : IRepository<ProductReviewAggregate>
+public interface IReviewAggregateRepository
 {
-    public Task<ProductReviewAggregate?> GetReviewAggregateByProductIdAsync(Guid productId);
-    public Task<ProductReviewAggregate?> RecalculateAggregateByProductIdAsync(Guid productId);
+    Task<ProductReviewAggregate?> GetReviewAggregateByProductIdAsync(Guid productId);
+    Task InsertAsync(ProductReviewAggregate aggregate);
+    void UpdateAsync(ProductReviewAggregate aggregate);
 }
