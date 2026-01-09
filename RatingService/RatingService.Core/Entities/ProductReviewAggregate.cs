@@ -1,8 +1,7 @@
 ﻿namespace RatingService.Core.Entities;
 
-public class ProductReviewAggregate : IEntity
+public class ProductReviewAggregate
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
     public Guid ProductId { get; set; }
 
     public int ReviewCount { get; set; }
