@@ -159,6 +159,7 @@ builder.Services.AddScoped<IReviewImageService, ReviewImageService>();
 builder.Services.AddScoped<IProductReviewRepository, ProductReviewRepository>();
 builder.Services.AddScoped<IProductQuestionRepository, ProductQuestionRepository>();
 builder.Services.AddScoped<IProductAnswerRepository, ProductAnswerRepository>();
+builder.Services.AddScoped<IReviewAggregateRepository, ReviewAggregateRepository>();
 
 
 
