@@ -9,16 +9,21 @@ public class ProductReviewAggregateConfig : IEntityTypeConfiguration<ProductRevi
     public void Configure(EntityTypeBuilder<ProductReviewAggregate> builder)
     {
         builder.HasKey(x => x.ProductId);
-
-        builder.Property(x => x.ReviewCount)
-            .IsRequired();
         
+        builder.Property(x => x.ReviewCount)
+            .IsRequired()
+            .HasDefaultValue(0);
+
         builder.Property(x => x.AverageRating)
             .HasColumnType("double precision")
-            .IsRequired();
-        
+            .IsRequired()
+            .HasDefaultValue(0);
+
         builder.Property(x => x.BayesianRating)
             .HasColumnType("double precision")
-            .IsRequired();
+            .IsRequired()
+            .HasDefaultValue(0);
+
+
     }
 }
