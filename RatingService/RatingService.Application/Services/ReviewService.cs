@@ -272,6 +272,18 @@ public class ReviewService(
         return reviews;
     }
 
+    public async Task<IEnumerable<ProductReview>> GetReviewsByUserId(Guid userId, int pageNumber, int pageSize)
+    {
+        var reviews = await productReviewRepository.GetReviewsByUserIdAsync(userId, pageNumber, pageSize: 30);
+        return reviews;
+    }
+
+    public async Task<IEnumerable<ProductReview>> GetReviewsByUserIdAndRating(Guid userId, int minRating, int maxRating, int pageNumber, int pageSize)
+    {
+        var reviews = await productReviewRepository.GetReviewsByUserIdAndRatingAsync(userId, minRating, maxRating, pageNumber, pageSize: 30);
+        return reviews;
+    }
+
     public async Task<ProductReview> GetReviewByid(Guid reviewId)
     {
         var review = await productReviewRepository.GetReviewByIdAsync(reviewId);
