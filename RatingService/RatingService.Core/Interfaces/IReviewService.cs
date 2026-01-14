@@ -13,6 +13,12 @@ public interface IReviewService
     Task<IEnumerable<ProductReview>> GetProductReviewsByRating(Guid productId, int rating, int page, int pageSize);
     Task<IEnumerable<ProductReview>> GetReviewsByDate(DateTime date, int pageNumber, int pageSize);
     Task<IEnumerable<ProductReview>> GetAllReviews(int pageNumber, int pageSize);
+    
+    Task<IEnumerable<ProductReview>> GetReviewsByUserId(Guid userId, int pageNumber, int pageSize);
+
+    Task<IEnumerable<ProductReview>> GetReviewsByUserIdAndRating(Guid userId, int minRating, int maxRating, int pageNumber, int pageSize);
+
+    
     Task<ProductReview> GetReviewByid(Guid reviewId);
 
     Task<ProductReviewAggregate> GetReviewAggregateByProductId(Guid productId);
