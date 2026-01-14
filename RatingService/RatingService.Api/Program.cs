@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -27,6 +28,33 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("SuperAdmin", policy => policy.RequireClaim(ClaimTypes.Role, "SuperAdmin"));
     options.AddPolicy("SuperAdminOrShopOwner", policy => policy.RequireClaim(ClaimTypes.Role, "ShopOwner", "SuperAdmin"));
 });
+
+
+// FOR CLIENTS PROTOS -- in the future -- Shop and Product mb
+// builder.Services.AddGrpcClient<ProductService.ProductServiceClient>(options =>
+// {
+//     options.Address = new Uri(builder.Configuration["gRPC:ProductService"]); 
+// });
+// builder.Services.AddGrpcClient<ShopService.ShopServiceClient>(options =>
+// {
+//     options.Address = new Uri(builder.Configuration["gRPC:ShopService"]); 
+// });
+
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Listen(IPAddress.Any, 5140, listenOptions =>
+    {
+        listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
+    });
+    
+
+    options.Listen(IPAddress.Any, 5006, listenOptions =>
+    {
+        listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2; 
+    });
+});
+
 
 
 //Jwt
@@ -150,7 +178,7 @@ builder.Services.AddAutoMapper(cfg => { },
     typeof(RatingService.Core.Profiles.ReviewProfile),
     typeof(RatingService.Core.Profiles.QuestionsAndAnswersProfile));
 
-
+builder.Services.AddGrpc();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
@@ -184,7 +212,7 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
-
+app.MapGrpcService<RatingService.Infrastructure.gRPC.GrpcRatingService>();
 app.MapControllers();
 
 
