@@ -48,6 +48,27 @@ public class ProductReviewRepository(RatingDbContext context) : Repository<Produ
             .AsNoTracking().ToListAsync();
     }
 
+    public async Task<IEnumerable<ProductReview>> GetReviewsByUserIdAsync(Guid userId, int page, int pageSize)
+    {
+        var skip = (page - 1) * pageSize;
+
+        return await Entities.Where(review => review.UserId == userId)
+            .Skip(skip)
+            .Take(pageSize)
+            .AsNoTracking().ToListAsync();
+    }
+
+    public async Task<IEnumerable<ProductReview>> GetReviewsByUserIdAndRatingAsync(Guid userId, int minRating, int maxRating, int page, int pageSize)
+    {
+        var skip = (page - 1) * pageSize;
+
+        return await Entities
+            .Where(review => review.UserId == userId && review.Rating >= minRating && review.Rating <= maxRating)
+            .Skip(skip)
+            .Take(pageSize)
+            .AsNoTracking().ToListAsync();
+    }
+
     public async Task<IEnumerable<ProductReview>> GetReviewsByDateAsync(
         DateTime date,
         int page,
