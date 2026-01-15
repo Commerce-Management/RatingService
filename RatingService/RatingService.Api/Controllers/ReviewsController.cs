@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Asp.Versioning;
+using Grpc.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RatingService.Application.Services;
@@ -49,7 +50,7 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
                 Message = "Не удалось определить пользователя из токена."
             });
         }
-        
+
         try
         {
             Log.Information("ReviewsController.CreateReview: Creating review {@Dto}", reviewDto);
@@ -62,6 +63,23 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
                 review
             );
         }
+        catch (RpcException rpcEx)
+        {
+            Log.Error(rpcEx,
+                "gRPC error: StatusCode={StatusCode}, Detail={Detail}, InnerException={InnerException}",
+                rpcEx.StatusCode,
+                rpcEx.Status.Detail,
+                rpcEx.InnerException?.Message);
+
+            return StatusCode(500, new
+            {
+                ErrorCode = "GrpcError",
+                Message = rpcEx.Status.Detail,
+                StatusCode = rpcEx.StatusCode.ToString(),
+                InnerException = rpcEx.InnerException?.Message,
+                StackTrace = rpcEx.StackTrace
+            });
+        }
         catch (Exception ex)
         {
             Log.Error(ex, "ReviewsController.CreateReview: Unexpected error {@Dto}", reviewDto);
@@ -71,6 +89,8 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
                 ErrorCode = "InternalServerError",
                 Message = "Ошибка при создании отзыва.",
                 ExceptionType = ex.GetType().Name,
+                ExceptionMessage = ex.Message,
+                InnerException = ex.InnerException?.Message,
                 StackTrace = ex.StackTrace
             });
         }
@@ -105,7 +125,7 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(new { Error = "Invalid data." });
-        
+
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var currentUserId))
             return Unauthorized(new { Error = "Cannot determine user." });

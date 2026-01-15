@@ -15,6 +15,7 @@ using RatingService.Infrastructure.Interfaces.Entities;
 using RatingService.Infrastructure.Repositories.Base;
 using RatingService.Infrastructure.Repositories.Entities;
 using RatingService.Shared.Dtos.Jwt;
+using RatingService.Shared.Protos.GrpcOrderService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,11 @@ builder.Services.AddAuthorization(options =>
 // {
 //     options.Address = new Uri(builder.Configuration["gRPC:ShopService"]); 
 // });
+
+builder.Services.AddGrpcClient<OrderService.OrderServiceClient>(options =>
+{
+    options.Address = new Uri(builder.Configuration["gRPC:OrderService"]); 
+});
 
 
 builder.WebHost.ConfigureKestrel(options =>
