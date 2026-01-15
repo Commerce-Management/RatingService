@@ -88,4 +88,10 @@ public class ProductReviewRepository(RatingDbContext context) : Repository<Produ
             .ToListAsync();
     }
 
+    public async Task<ProductReview?> GetReviewByUserIdAndProductIdAsync(Guid userId, Guid productId)
+    {
+        return await Entities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.UserId == userId && r.ProductId == productId);
+    }
 }
