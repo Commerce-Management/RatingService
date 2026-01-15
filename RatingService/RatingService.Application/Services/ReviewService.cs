@@ -4,6 +4,7 @@ using RatingService.Core.Interfaces;
 using RatingService.Infrastructure.Interfaces.Base;
 using RatingService.Infrastructure.Interfaces.Entities;
 using RatingService.Shared.Dtos;
+using RatingService.Shared.Protos.GrpcOrderService;
 
 namespace RatingService.Application.Services;
 
@@ -11,6 +12,7 @@ public class ReviewService(
     IUnitOfWork unitOfWork,
     IProductReviewRepository productReviewRepository,
     IReviewAggregateRepository reviewAggregateRepository,
+    OrderService.OrderServiceClient orderClient,
     IReviewImageService imageService,
     IMapper mapper
     ) : IReviewService
@@ -22,6 +24,28 @@ public class ReviewService(
 
         try
         {
+            
+            //  0. Проверка: пользователь купил и получил продукт
+            var orderStatusResponse = await orderClient.GetOrderStatusByProductIdAsync(
+                new GetOrderStatusByProductIdRequest
+                {
+                    ProductId = reviewDto.ProductId.ToString(),
+                    UserId = reviewDto.UserId.ToString()
+                });
+
+            if (!orderStatusResponse.Exists)
+                throw new Exception("You cannot review a product you haven't purchased");
+
+            if (!string.Equals(orderStatusResponse.Status, "Delivered", StringComparison.OrdinalIgnoreCase))
+                throw new Exception("You can review a product only after it is delivered");
+
+            var existingReview = await productReviewRepository.GetReviewByUserIdAndProductIdAsync(
+                reviewDto.UserId, 
+                reviewDto.ProductId);
+        
+            if (existingReview != null)
+                throw new Exception("You have already reviewed this product");
+
             // 1. Маппинг отзыва
             var review = mapper.Map<ProductReview>(reviewDto);
 
