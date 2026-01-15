@@ -13,4 +13,7 @@ public interface IProductReviewRepository : IRepository<ProductReview>
     public Task<IEnumerable<ProductReview>> GetReviewsByUserIdAndRatingAsync(Guid userId, int minRating, int maxRating, int page, int pageSize);
 
     public Task<IEnumerable<ProductReview>> GetReviewsByDateAsync(DateTime date, int page, int pageSize);
+    
+    public Task<ProductReview?> GetReviewByUserIdAndProductIdAsync(Guid userId, Guid productId);
+
 }
