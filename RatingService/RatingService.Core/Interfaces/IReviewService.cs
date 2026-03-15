@@ -22,5 +22,5 @@ public interface IReviewService
     Task<ProductReview> GetReviewByid(Guid reviewId);
 
     Task<ProductReviewAggregate> GetReviewAggregateByProductId(Guid productId);
-
+    Task<ProductReviewAggregateDto> GetAggregateByShopIdAsync(Guid shopId, DateTime? from = null, DateTime? to = null);
 }

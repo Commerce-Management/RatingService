@@ -94,4 +94,28 @@ public class ProductReviewRepository(RatingDbContext context) : Repository<Produ
             .AsNoTracking()
             .FirstOrDefaultAsync(r => r.UserId == userId && r.ProductId == productId);
     }
+    
+    public async Task<List<Guid>> GetActiveUsersForTrainingAsync(int minReviews, int maxUsers)
+    {
+        var activeUsers = await Entities
+            .GroupBy(r => r.UserId)
+            .Where(g => g.Count() >= minReviews)
+            .Select(g => new
+            {
+                UserId = g.Key,
+                ReviewCount = g.Count(),
+                AvgRating = g.Average(r => r.Rating),
+                CategoryDiversity = g.Select(r => r.ProductId).Distinct().Count()
+            })
+            .OrderByDescending(u => u.CategoryDiversity)  // Приоритет - разнообразие
+            .ThenByDescending(u => u.ReviewCount)         // Потом - активность
+            .Take(maxUsers)
+            .Select(u => u.UserId)
+            .ToListAsync();
+
+        return activeUsers;
+    }
+
+    public IQueryable<ProductReview> GetQueryableEntities() => Entities.AsQueryable();
+
 }

@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\RatingService.Core",
+    "\\RatingService.Core\\Entities",
+    "\\RatingService.Infrastructure",
+    "\\RatingService.Infrastructure\\Interfaces",
+    "\\RatingService.Infrastructure\\Interfaces\\Entities",
+    "\\RatingService.Infrastructure\\Repositories",
+    "\\RatingService.Infrastructure\\Repositories\\Entities",
+    "\\RatingService.Shared",
+    "\\RatingService.Shared\\Dtos",
+    "\\RatingService.Shared\\Protos"
+  ],
+  "PreviewInSolutionExplorer": false
+}

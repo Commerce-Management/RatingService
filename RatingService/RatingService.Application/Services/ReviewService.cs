@@ -5,6 +5,10 @@ using RatingService.Infrastructure.Interfaces.Base;
 using RatingService.Infrastructure.Interfaces.Entities;
 using RatingService.Shared.Dtos;
 using RatingService.Shared.Protos.GrpcOrderService;
+using RatingService.Shared.Protos.GrpcProductService;
+using Microsoft.EntityFrameworkCore;
+using Serilog;
+using Grpc.Core;
 
 namespace RatingService.Application.Services;
 
@@ -13,6 +17,7 @@ public class ReviewService(
     IProductReviewRepository productReviewRepository,
     IReviewAggregateRepository reviewAggregateRepository,
     OrderService.OrderServiceClient orderClient,
+    ProductService.ProductServiceClient productGrpc,
     IReviewImageService imageService,
     IMapper mapper
     ) : IReviewService
@@ -25,9 +30,9 @@ public class ReviewService(
         try
         {
             
-            //  0. Проверка: пользователь купил и получил продукт
-            var orderStatusResponse = await orderClient.GetOrderStatusByProductIdAsync(
-                new GetOrderStatusByProductIdRequest
+          
+            var orderStatusResponse = await orderClient.GetOrderStatusByProductIdAndUserIdAsync(
+                new GetOrderStatusByProductIdAndUserIdRequest
                 {
                     ProductId = reviewDto.ProductId.ToString(),
                     UserId = reviewDto.UserId.ToString()
@@ -46,10 +51,39 @@ public class ReviewService(
             if (existingReview != null)
                 throw new Exception("You have already reviewed this product");
 
-            // 1. Маппинг отзыва
+         
             var review = mapper.Map<ProductReview>(reviewDto);
 
-            // 2. Загрузка изображений
+          
+            try
+            {
+                var prodResp = await productGrpc.GetProductsByIdsAsync(new GetProductsByIdsRequest
+                {
+                    ProductIds = { reviewDto.ProductId.ToString() }
+                });
+
+                var brief = prodResp?.Products?.FirstOrDefault();
+                if (brief != null && !string.IsNullOrWhiteSpace(brief.ShopId))
+                {
+                    if (Guid.TryParse(brief.ShopId, out var shopGuid))
+                        review.ShopId = shopGuid;
+                    else
+                        review.ShopId = null;
+                }
+                else
+                {
+                   
+                    review.ShopId = null;
+                }
+            }
+            catch (RpcException ex)
+            {
+           
+                Log.Warning(ex, "ProductService gRPC failed while fetching product info for {ProductId}", reviewDto.ProductId);
+                review.ShopId = null;
+            }
+
+        
             if (reviewDto.Images is { Length: > 0 })
             {
                 var imageUrls = new List<string>();
@@ -65,7 +99,7 @@ public class ReviewService(
                 review.ImageUrls = Array.Empty<string>();
             }
 
-            // 3. Получаем или создаём Aggregate
+      
             var aggregate =
                 await reviewAggregateRepository.GetReviewAggregateByProductIdAsync(review.ProductId)
                 ?? new ProductReviewAggregate
@@ -76,7 +110,7 @@ public class ReviewService(
                     BayesianRating = 0
                 };
 
-            // 4. Обновляем aggregate
+           
             var oldCount = aggregate.ReviewCount;
             aggregate.ReviewCount++;
 
@@ -86,15 +120,15 @@ public class ReviewService(
             aggregate.AverageRating =
                 totalRating / aggregate.ReviewCount;
 
-            // 5. Bayesian rating
-            const int M = 3;      // минимальное доверие
-            const double C = 4.0; // baseline рейтинга маркетплейса
+           
+            const int M = 3;      
+            const double C = 4.0;  
 
             aggregate.BayesianRating =
                 (aggregate.ReviewCount * aggregate.AverageRating + M * C)
                 / (aggregate.ReviewCount + M);
 
-            // 6. Сохраняем
+          
             await productReviewRepository.InsertAsync(review);
 
             if (oldCount == 0)
@@ -132,7 +166,7 @@ public class ReviewService(
 
             var oldRating = review.Rating;
 
-            // ----------- Update fields -----------
+        
             if (reviewDto.Rating.HasValue)
                 review.Rating = reviewDto.Rating.Value;
 
@@ -145,7 +179,7 @@ public class ReviewService(
             if (reviewDto.Text != null)
                 review.Text = reviewDto.Text;
 
-            // ----------- Images -----------
+            
             var oldImageUrls = review.ImageUrls?.ToList() ?? new List<string>();
             var existingImageUrls = oldImageUrls.ToList();
 
@@ -172,7 +206,7 @@ public class ReviewService(
             review.ImageUrls = existingImageUrls.ToArray();
             review.UpdatedAt = DateTime.UtcNow;
 
-            // ----------- Aggregate recalculation (ONLY if rating changed) -----------
+      
             if (reviewDto.Rating.HasValue && reviewDto.Rating.Value != oldRating)
             {
                 var totalRating =
@@ -222,14 +256,14 @@ public class ReviewService(
                 await reviewAggregateRepository.GetReviewAggregateByProductIdAsync(review.ProductId)
                 ?? throw new InvalidOperationException("Aggregate not found");
 
-            // ----------- Delete images -----------
+     
             if (review.ImageUrls != null)
             {
                 foreach (var imageUrl in review.ImageUrls)
                     await imageService.DeleteImageAsync(imageUrl);
             }
 
-            // ----------- Aggregate recalculation -----------
+      
             var oldCount = aggregate.ReviewCount;
             aggregate.ReviewCount--;
 
@@ -292,19 +326,19 @@ public class ReviewService(
 
     public async Task<IEnumerable<ProductReview>> GetAllReviews(int pageNumber, int pageSize)
     {
-        var reviews = await productReviewRepository.GetAllReviewsAsync(pageNumber, pageSize: 30);
+        var reviews = await productReviewRepository.GetAllReviewsAsync(pageNumber, pageSize);
         return reviews;
     }
 
     public async Task<IEnumerable<ProductReview>> GetReviewsByUserId(Guid userId, int pageNumber, int pageSize)
     {
-        var reviews = await productReviewRepository.GetReviewsByUserIdAsync(userId, pageNumber, pageSize: 30);
+        var reviews = await productReviewRepository.GetReviewsByUserIdAsync(userId, pageNumber, pageSize);
         return reviews;
     }
 
     public async Task<IEnumerable<ProductReview>> GetReviewsByUserIdAndRating(Guid userId, int minRating, int maxRating, int pageNumber, int pageSize)
     {
-        var reviews = await productReviewRepository.GetReviewsByUserIdAndRatingAsync(userId, minRating, maxRating, pageNumber, pageSize: 30);
+        var reviews = await productReviewRepository.GetReviewsByUserIdAndRatingAsync(userId, minRating, maxRating, pageNumber, pageSize);
         return reviews;
     }
 
@@ -329,4 +363,47 @@ public class ReviewService(
 
         return aggregateReview;
     }
+
+
+
+    //NEW FOR SHOP
+
+    public async Task<ProductReviewAggregateDto> GetAggregateByShopIdAsync(Guid shopId, DateTime? from = null, DateTime? to = null)
+    {
+        var q = productReviewRepository.GetQueryableEntities()
+            .Where(r => r.ShopId.HasValue && r.ShopId.Value == shopId);
+
+        if (from.HasValue)
+            q = q.Where(r => r.CreatedAt >= from.Value);
+
+        if (to.HasValue)
+            q = q.Where(r => r.CreatedAt <= to.Value);
+
+        var totalCount = await q.CountAsync();
+
+        var result = new ProductReviewAggregateDto
+        {
+            TotalCount = totalCount,
+            AverageRating = 0,
+            Histogram = new Dictionary<int, int> { { 1, 0 }, { 2, 0 }, { 3, 0 }, { 4, 0 }, { 5, 0 } }
+        };
+
+        if (totalCount == 0) return result;
+
+        var avg = await q.AverageAsync(r => r.Rating);
+        result.AverageRating = Math.Round(avg, 2);
+
+        var groups = await q.GroupBy(r => r.Rating)
+                            .Select(g => new { Rating = g.Key, Count = g.Count() })
+                            .ToListAsync();
+
+        foreach (var g in groups)
+        {
+            if (g.Rating >= 1 && g.Rating <= 5)
+                result.Histogram[g.Rating] = g.Count;
+        }
+
+        return result;
+    }
+
 }

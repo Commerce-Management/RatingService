@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RatingService.Infrastructure.Context;
@@ -11,9 +12,11 @@ using RatingService.Infrastructure.Context;
 namespace RatingService.Infrastructure.Migrations
 {
     [DbContext(typeof(RatingDbContext))]
-    partial class RatingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260309084539_AddShopIdToProductReview")]
+    partial class AddShopIdToProductReview
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

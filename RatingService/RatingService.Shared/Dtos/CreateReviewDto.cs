@@ -9,7 +9,7 @@ public record CreateReviewDto(
     int Rating, 
     string? Title, 
     string? Text, 
-    
+                                                
     [AllowedExtensions([".jpg", ".png"])]
     [MaxFileSize(10 * 1024 * 1024)]
     IFormFile[]? Images,

@@ -203,6 +203,33 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
         }
     }
 
+    // GET: api/v1/reviews/user/{userId}
+    [HttpGet("user/{userId:guid}")]
+    public async Task<IActionResult> GetReviewsByUserId(
+        Guid userId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        if (pageNumber < 1 || pageSize < 1)
+            return BadRequest(new { Error = "PageNumber and PageSize must be greater than 0." });
+
+        try
+        {
+            var reviews = await reviewService
+                .GetReviewsByUserId(userId, pageNumber, pageSize);
+
+            if (!reviews.Any())
+                return NotFound(new { Error = "No reviews found." });
+
+            return Ok(reviews);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "ReviewsController.GetReviewsByUserId: Error for user {UserId}", userId);
+            return StatusCode(500, new { Error = "Server error." });
+        }
+    }
+
     // GET: api/v1/reviews/product/{productId}/rating/{rating}
     [HttpGet("product/{productId:guid}/rating/{rating:int}")]
     public async Task<IActionResult> GetReviewsByRating(
@@ -279,4 +306,31 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
             return StatusCode(500, new { Error = "Server error." });
         }
     }
+
+    // GET: api/v1/reviews/shop/{shopId}/aggregate?from=2026-01-01&to=2026-02-01
+    [HttpGet("shop/{shopId:guid}/aggregate")]
+    public async Task<IActionResult> GetAggregateByShopId(
+        Guid shopId,
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null)
+    {
+        try
+        {
+            var agg = await reviewService.GetAggregateByShopIdAsync(shopId, from, to);
+            return Ok(agg);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            Log.Warning(ex, "Aggregate not found for shop {ShopId}", shopId);
+            return NotFound(new { Error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error fetching aggregate for shop {ShopId}", shopId);
+            return StatusCode(500, new { Error = "Server error." });
+        }
+    }
+
+
+
 }

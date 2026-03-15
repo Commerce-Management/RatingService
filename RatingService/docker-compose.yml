@@ -1,0 +1,6 @@
+services:
+  ratingservice.api:
+    image: darknessco/kubernetesapp:rating
+    build:
+      context: .
+      dockerfile: RatingService.Api/Dockerfile
